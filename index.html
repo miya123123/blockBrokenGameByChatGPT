@@ -1,0 +1,218 @@
+<div id="score"></div>
+<canvas id="game" width="500" height="500"></canvas>
+<script>
+    // canvas要素を取得
+    var canvas = document.getElementById("game");
+    var ctx = canvas.getContext("2d");
+
+
+    // ボールとバーのオブジェクトを定義
+    var ball = {
+        x: 250,
+        y: 450,
+        radius: 10,
+        xSpeed: 5,
+        ySpeed: -5
+    };
+    var bar = {
+        x: 250,
+        y: 480,
+        width: 100,
+        height: 10
+    };
+
+    // ブロックの配列を定義
+    var blocks = [];
+    for (var i = 0; i < 5; i++) {
+        for (var j = 0; j < 5; j++) {
+            blocks.push({
+                x: i * 100,
+                y: j * 20,
+                width: 90,
+                height: 10
+            });
+        }
+    }
+
+    var intervalId;
+    var score = 0;
+    var scoreLabel = document.getElementById("score");
+
+    function updateScore() {
+        score++;
+    }
+    function drawScore() {
+        // ctx.font = "16px Arial";
+        // ctx.fillStyle = "black";
+        // ctx.fillText("Score: " + score, canvas.width - 10, 20);
+        scoreLabel.innerHTML = "Score: " + score;
+
+
+    }
+
+
+    function startGame() {
+        score = 0;
+        // ゲームの初期設定
+        ball = {
+            x: 250,
+            y: 450,
+            radius: 10,
+            xSpeed: 5,
+            ySpeed: -5
+        };
+        bar = {
+            x: 250,
+            y: 480,
+            width: 100,
+            height: 10
+        };
+
+        blocks = [];
+        for (var i = 0; i < 5; i++) {
+            for (var j = 0; j < 5; j++) {
+                blocks.push({
+                    x: i * 100,
+                    y: j * 20,
+                    width: 90,
+                    height: 10
+                });
+            }
+        }
+        intervalId = setInterval(update, 10);
+    }
+
+    startGame();
+
+    // document.onmousemove = function(e) {
+    //     var mouseX = e.clientX - canvas.offsetLeft;
+    //     if (mouseX > 0 && mouseX < canvas.width) {
+    //         bar.x = mouseX - bar.width / 2;
+    //     }
+    // }
+
+
+
+    // ゲームループ
+    function update() {
+        // ボールを移動
+        ball.x += ball.xSpeed;
+        ball.y += ball.ySpeed;
+
+        // ボールが画面外に出たら反転
+        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+            ball.xSpeed = -ball.xSpeed;
+        }
+        if (ball.y - ball.radius < 0) {
+            ball.ySpeed = -ball.ySpeed;
+        }
+
+        // ボールがバーに当たったら反転
+        if (ball.x > bar.x && ball.x < bar.x + bar.width && ball.y + ball.radius > bar.y) {
+            ball.ySpeed = -ball.ySpeed;
+        }
+
+        // ボールがブロックに当たったらブロックを削除
+        for (var i = 0; i < blocks.length; i++) {
+            if (ball.x + ball.radius > blocks[i].x && ball.x - ball.radius < blocks[i].x + blocks[i].width && ball.y - ball.radius < blocks[i].y + blocks[i].height && ball.y + ball.radius > blocks[i].y) {
+                blocks.splice(i, 1);
+                updateScore();
+                ball.ySpeed = -ball.ySpeed;
+                break;
+            }
+        }
+
+
+        // 描画
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(bar.x, bar.y, bar.width, bar.height);
+        for (var i = 0; i < blocks.length; i++) {
+            ctx.fillRect(blocks[i].x, blocks[i].y, blocks[i].width, blocks[i].height);
+        }
+
+
+
+
+
+        ctx.strokeStyle = "black";
+        ctx.strokeRect(0,0,canvas.width,canvas.height);
+
+        // バーを移動
+        document.onmousemove = function(e) {
+            bar.x = e.clientX - canvas.offsetLeft - bar.width / 2;
+        }
+
+        // document.onmousemove = function(e) {
+        //     var mouseX = e.clientX - canvas.offsetLeft;
+        //     if (mouseX > 0 && mouseX < canvas.width) {
+        //         bar.x = mouseX - bar.width / 2;
+        //     }
+        // }
+
+
+        // document.onmousemove = function(e) {
+        //     var mouseX = e.clientX - canvas.offsetLeft;
+        //     if (mouseX > bar.width / 2 && mouseX < canvas.width - bar.width / 2) {
+        //         bar.x = mouseX - bar.width / 2;
+        //     }
+        // }
+
+
+        document.onmousemove = function(e) {
+            var mouseX = e.clientX - canvas.offsetLeft;
+            if (mouseX < bar.width / 2) {
+                bar.x = 0;
+            } else if (mouseX > canvas.width - bar.width / 2) {
+                bar.x = canvas.width - bar.width;
+            } else {
+                bar.x = mouseX - bar.width / 2;
+            }
+        }
+
+
+        // for (var i = 0; i < blocks.length; i++) {
+        //     if (ball.x > blocks[i].x && ball.x < blocks[i].x + blocks[i].width && ball.y > blocks[i].y && ball.y < blocks[i].y + blocks[i].height) {
+        //         blocks.splice(i, 1);
+        //         updateScore();
+        //         ball.ySpeed = -ball.ySpeed;
+        //         break;
+        //     }
+        // }
+        // drawScore();
+
+
+
+
+        
+
+        // ゲームオーバー時の処理
+        if (ball.y + ball.radius > canvas.height) {
+            alert("Game Over!");
+            clearInterval(intervalId);
+            var restart = confirm("Would you like to restart the game?");
+            if (restart) {
+                startGame();
+            }
+        }
+
+        // ゲームクリア判定
+        if (blocks.length == 0) {
+            alert("Congratulations! You cleared the game!");
+            clearInterval(intervalId);
+            var restart = confirm("Would you like to restart the game?");
+            if (restart) {
+                startGame();
+            }
+        }
+        drawScore();
+    }
+
+    // // ゲームループ開始
+    // var intervalId = setInterval(update, 10);
+
+
+</script>
+
